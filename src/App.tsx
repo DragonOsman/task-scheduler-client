@@ -1,10 +1,11 @@
 import React, { ChangeEvent, useState } from "react";
+import TimeField from "react-simple-timefield";
 import "./App.css";
 
 interface TaskType {
   title: string;
   description: string;
-  time: Date
+  time: string
 }
 
 interface TaskFormProps {
@@ -14,21 +15,25 @@ interface TaskFormProps {
 function TaskForm({ addTask }: TaskFormProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [time, setTime] = useState(new Date());
+  const [time, setTime] = useState("00:00");
 
   const handleSubmit = (e:SubmitEvent) => {
     e.preventDefault();
-    if (!title && !description && !time) {
+    if (!title || !description || !time) {
       return;
     }
 
-    addTask({title, description, time});
+    const task: TaskType = {
+      title: title,
+      description: description,
+      time: time
+    };
+
+    addTask(task);
     setTitle("");
     setDescription("");
-    setTime(new Date());
+    setTime("00:00");
   };
-
-  const timeStr = time.toTimeString();
 
   return (
     <form onSubmit={() => handleSubmit}>
@@ -50,17 +55,9 @@ function TaskForm({ addTask }: TaskFormProps) {
       />
 
       <label htmlFor="time">Task Completion Time:</label>
-      <input
-        type="time"
-        name="time"
-        value={timeStr}
-        step={360000}
-        onChange={e => {
-          const timeValue = e.target.value;
-          if (timeValue) {
-            return timeValue;
-          }
-        }}
+      <TimeField
+        value={time}
+        onChange={e => setTime(e.target.value)}
       />
       <button type="submit">Add Task</button>
     </form>
@@ -77,7 +74,9 @@ function Task({ task }: { task: TaskType }) {
 
 function TaskList({ tasks }: { tasks: TaskType[] }) {
   return (
-    <ul className="task-list">
+    <ul className="task-list" style={{
+      listStyleType: "none"
+    }}>
       {tasks.map((task, index) => (
         <li key={index}>
           <Task
@@ -97,7 +96,7 @@ function App() {
   const [tasks, setTasks] = useState([{
     title: "",
     description: "",
-    time: new Date()
+    time: "00:00"
   }]);
 
   const addTask = (task: TaskType) => {
