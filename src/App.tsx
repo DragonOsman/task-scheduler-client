@@ -28,7 +28,7 @@ function TaskForm({ addTask }: TaskFormProps) {
     setTime(new Date());
   };
 
-  const timeStr = time.toDateString();
+  const timeStr = time.toTimeString();
 
   return (
     <form onSubmit={() => handleSubmit}>
@@ -54,13 +54,15 @@ function TaskForm({ addTask }: TaskFormProps) {
         type="time"
         name="time"
         value={timeStr}
+        step={360000}
         onChange={e => {
-          const timeValue = e.target.valueAsDate;
+          const timeValue = e.target.value;
           if (timeValue) {
-            return timeValue.toDateString();
+            return timeValue;
           }
         }}
       />
+      <button type="submit">Add Task</button>
     </form>
   );
 }
