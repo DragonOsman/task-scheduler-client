@@ -1,11 +1,18 @@
-import React, { ChangeEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useState } from "react";
 import TimeField from "react-simple-timefield";
 import "./App.css";
 
 interface TaskType {
   title: string;
   description: string;
-  time: string
+  time: string,
+  isCompleted: boolean
+}
+
+interface TaskListProps {
+  tasks: TaskType[];
+  roleChoice: string;
+  removeTask: Function;
 }
 
 interface TaskFormProps {
@@ -16,8 +23,9 @@ function TaskForm({ addTask }: TaskFormProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [time, setTime] = useState("00:00");
+  const [isCompleted, setIsCompleted] = useState(false);
 
-  const handleSubmit = (e:SubmitEvent) => {
+  const handleSubmit = (e:FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!title || !description || !time) {
       return;
@@ -26,17 +34,21 @@ function TaskForm({ addTask }: TaskFormProps) {
     const task: TaskType = {
       title: title,
       description: description,
-      time: time
+      time: time,
+      isCompleted: isCompleted
     };
 
-    addTask(task);
+    if (title !== "" && description !== "" && time !== "00:00") {
+      addTask(task);
+    }
     setTitle("");
     setDescription("");
+    setIsCompleted(false);
     setTime("00:00");
   };
 
   return (
-    <form onSubmit={() => handleSubmit}>
+    <form onSubmit={handleSubmit}>
       <br />
       <label htmlFor="title">Task Title:</label>
       <input
@@ -67,22 +79,51 @@ function TaskForm({ addTask }: TaskFormProps) {
 function Task({ task }: { task: TaskType }) {
   return (
     <div className="task">
-      {task.title}
+      <p style={{
+        textDecoration: task.isCompleted ?
+          "line-through"
+          :
+          "none"
+      }}>{task.title}</p>
+      <p style={{
+        textDecoration: task.isCompleted ?
+          "line-through"
+          :
+          "none"
+      }}>{task.description}</p>
+      <p>{task.time}</p>
     </div>
   );
 }
 
-function TaskList({ tasks }: { tasks: TaskType[] }) {
+function TaskList({ tasks, roleChoice, removeTask }: TaskListProps) {
   return (
     <ul className="task-list" style={{
-      listStyleType: "none"
+      listStyleType: "none",
+      backgroundColor: "lightblue",
+      marginRight: "100px",
+      marginLeft: "70px"
     }}>
       {tasks.map((task, index) => (
-        <li key={index}>
-          <Task
-            task={task}
-          />
-        </li>
+        <>
+          <li key={index}>
+            <>
+              <input type="checkbox" onChange={(e:ChangeEvent<HTMLInputElement>) => {
+                if (e.target.checked) {
+                  task.isCompleted = true;
+                }
+              }}
+              />
+              <Task
+                task={task}
+              />
+              {roleChoice === "parent" ?
+                <button onClick={() => removeTask(index)}>Delete</button>
+                :
+                <></>}
+            </>
+          </li>
+        </>
       ))}
     </ul>
   );
@@ -96,14 +137,18 @@ function App() {
   const [tasks, setTasks] = useState([{
     title: "",
     description: "",
-    time: "00:00"
+    time: "00:00",
+    isCompleted: false
   }]);
 
+  console.log(`tasks: ${tasks.map(task => console.log(task))}`);
+
   const addTask = (task: TaskType) => {
-    const newTasks = [...tasks, {
+    const newTasks: TaskType[] = [...tasks, {
       title: task.title,
       description: task.description,
-      time: task.time
+      time: task.time,
+      isCompleted: task.isCompleted
     }];
     setTasks(newTasks);
   };
@@ -113,6 +158,12 @@ function App() {
       value: e.target.value
     });
   };
+
+  const removeTask = (index: number) => {
+    const newTasks = [...tasks];
+    newTasks.splice(index, 1);
+    setTasks(newTasks);
+  }
 
   return (
     <>
@@ -142,9 +193,12 @@ function App() {
       </form>
 
       {selected.value === "parent" ?
-        <TaskForm addTask={addTask} />
+        <>
+          <TaskForm addTask={addTask} />
+          <TaskList tasks={tasks} roleChoice="parent" removeTask={removeTask} />
+        </>
         :
-        <TaskList tasks={tasks} />
+        <TaskList tasks={tasks} roleChoice="child" removeTask={removeTask} />
       }
     </>
   );
