@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useState, useEffect, useCallback } from "react";
 import TimeField from "react-simple-timefield";
 import "./App.css";
 
@@ -9,10 +9,19 @@ interface TaskType {
   isCompleted: boolean
 }
 
+interface TaskProps {
+  task: TaskType;
+  roleChoice: string;
+  removeTask: Function;
+  completeTask: Function;
+  index: number;
+}
+
 interface TaskListProps {
   tasks: TaskType[];
   roleChoice: string;
   removeTask: Function;
+  completeTask: Function;
 }
 
 interface TaskFormProps {
@@ -38,9 +47,7 @@ function TaskForm({ addTask }: TaskFormProps) {
       isCompleted: isCompleted
     };
 
-    if (title !== "" && description !== "" && time !== "00:00") {
-      addTask(task);
-    }
+    addTask(task);
     setTitle("");
     setDescription("");
     setIsCompleted(false);
@@ -76,54 +83,42 @@ function TaskForm({ addTask }: TaskFormProps) {
   );
 }
 
-function Task({ task }: { task: TaskType }) {
+function Task({ task, roleChoice, removeTask, completeTask, index }: TaskProps) {
   return (
     <div className="task">
+      <button onClick={() => completeTask(index)}>Complete</button>
       <p style={{
-        textDecoration: task.isCompleted ?
-          "line-through"
-          :
-          "none"
+        textDecoration: task.isCompleted ? "line-through" : "none"
       }}>{task.title}</p>
       <p style={{
-        textDecoration: task.isCompleted ?
-          "line-through"
-          :
-          "none"
+        textDecoration: task.isCompleted ? "line-through" : "none"
       }}>{task.description}</p>
       <p>{task.time}</p>
+      {roleChoice === "parent" ?
+        <button onClick={() => removeTask(index)}>Delete</button>
+        :
+        <button disabled>Delete</button>}
     </div>
   );
 }
 
-function TaskList({ tasks, roleChoice, removeTask }: TaskListProps) {
+function TaskList({ tasks, roleChoice, removeTask, completeTask }: TaskListProps) {
   return (
     <ul className="task-list" style={{
       listStyleType: "none",
-      backgroundColor: "lightblue",
       marginRight: "100px",
       marginLeft: "70px"
     }}>
       {tasks.map((task, index) => (
-        <>
-          <li key={index}>
-            <>
-              <input type="checkbox" onChange={(e:ChangeEvent<HTMLInputElement>) => {
-                if (e.target.checked) {
-                  task.isCompleted = true;
-                }
-              }}
-              />
-              <Task
-                task={task}
-              />
-              {roleChoice === "parent" ?
-                <button onClick={() => removeTask(index)}>Delete</button>
-                :
-                <></>}
-            </>
-          </li>
-        </>
+        <li key={index}>
+          <Task
+            task={task}
+            roleChoice={roleChoice}
+            removeTask={removeTask}
+            index={index}
+            completeTask={completeTask}
+          />
+        </li>
       ))}
     </ul>
   );
@@ -134,14 +129,29 @@ function App() {
     value: "child"
   });
 
-  const [tasks, setTasks] = useState([{
-    title: "",
-    description: "",
-    time: "00:00",
-    isCompleted: false
-  }]);
+  const [tasks, setTasks] = useState<TaskType[]>([]);
 
-  console.log(`tasks: ${tasks.map(task => console.log(task))}`);
+  const calculateTimesLeft = useCallback(() => {
+    const destinationTimes: Date[] = tasks.map(task => new Date(task.time));
+    const timeDifferences: number[] = destinationTimes.map(destTime => (
+      Number(destTime) - Number(new Date())
+    ));
+
+    const timesLeft = timeDifferences.map(difference => {
+      let result;
+      if (difference > 0) {
+        result =  {
+          hours: Math.floor((difference / (1000 * 60 * 60 * 24)) % 24),
+          minutes: Math.floor((difference / 1000 * 60) % 60)
+        };
+      }
+      return result;
+    });
+
+    return timesLeft;
+  }, [tasks]);
+
+  const [timesLeft, setTimesLeft] = useState(calculateTimesLeft());
 
   const addTask = (task: TaskType) => {
     const newTasks: TaskType[] = [...tasks, {
@@ -164,6 +174,31 @@ function App() {
     newTasks.splice(index, 1);
     setTasks(newTasks);
   }
+
+  const completeTask = (index: number) => {
+    const newTasks = [...tasks];
+    newTasks[index].isCompleted = true;
+    setTasks(newTasks);
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setTimesLeft(calculateTimesLeft());
+      let newTasks:TaskType[] = [...tasks];
+      newTasks = newTasks.map(task => {
+        task.time = timesLeft.toString();
+        return {
+          title: task.title,
+          description: task.description,
+          time: task.time,
+          isCompleted: task.isCompleted
+        };
+      });
+      setTasks(newTasks);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [tasks, timesLeft, calculateTimesLeft]);
 
   return (
     <>
@@ -195,10 +230,20 @@ function App() {
       {selected.value === "parent" ?
         <>
           <TaskForm addTask={addTask} />
-          <TaskList tasks={tasks} roleChoice="parent" removeTask={removeTask} />
+          <TaskList
+            tasks={tasks}
+            roleChoice="parent"
+            removeTask={removeTask}
+            completeTask={completeTask}
+          />
         </>
         :
-        <TaskList tasks={tasks} roleChoice="child" removeTask={removeTask} />
+        <TaskList
+          tasks={tasks}
+          roleChoice="child"
+          removeTask={removeTask}
+          completeTask={completeTask}
+        />
       }
     </>
   );
