@@ -140,7 +140,7 @@ function App() {
     const timesLeft = timeDifferences.map(difference => {
       let result;
       if (difference > 0) {
-        result =  {
+        result = {
           hours: Math.floor((difference / (1000 * 60 * 60 * 24)) % 24),
           minutes: Math.floor((difference / 1000 * 60) % 60)
         };
@@ -152,6 +152,52 @@ function App() {
   }, [tasks]);
 
   const [timesLeft, setTimesLeft] = useState(calculateTimesLeft());
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setTimesLeft(calculateTimesLeft());
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [timesLeft, calculateTimesLeft]);
+
+
+  useEffect(() => {
+    let timerStr = "00:00";
+
+    timesLeft.forEach(timeLeft => {
+      if (timeLeft !== undefined) {
+        if (timeLeft["hours"] === 0 && timeLeft["minutes"] === 0) {
+          return;
+        }
+
+        if (timeLeft.hours.toString().length === 1 &&
+        timeLeft.minutes.toString().length === 1) {
+          timerStr = `0${timeLeft.hours}:0${timeLeft.minutes}`;
+        } else if (timeLeft.hours.toString().length === 1 &&
+        timeLeft.minutes.toString().length === 2) {
+          timerStr = `0${timeLeft.hours}:${timeLeft.minutes}`;
+        } else if (timeLeft.hours.toString().length === 2 &&
+        timeLeft.minutes.toString().length === 1) {
+          timerStr = `${timeLeft.hours}:0${timeLeft.minutes}`;
+        } else if (timeLeft.hours.toString().length === 2 &&
+        timeLeft.minutes.toString().length === 2) {
+          timerStr = `${timeLeft.hours}:${timeLeft.minutes}`;
+        }
+
+        setTasks(newTasks => {
+          newTasks = tasks.map(task => ({
+            title: task.title,
+            description: task.description,
+            time: timerStr,
+            isCompleted: task.isCompleted
+          }));
+          return newTasks;
+        });
+      }
+    });
+  }, [tasks, timesLeft]);
+  tasks.map(task => console.log(task.time));
 
   const addTask = (task: TaskType) => {
     const newTasks: TaskType[] = [...tasks, {
@@ -180,25 +226,6 @@ function App() {
     newTasks[index].isCompleted = true;
     setTasks(newTasks);
   };
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setTimesLeft(calculateTimesLeft());
-      let newTasks:TaskType[] = [...tasks];
-      newTasks = newTasks.map(task => {
-        task.time = timesLeft.toString();
-        return {
-          title: task.title,
-          description: task.description,
-          time: task.time,
-          isCompleted: task.isCompleted
-        };
-      });
-      setTasks(newTasks);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [tasks, timesLeft, calculateTimesLeft]);
 
   return (
     <>
