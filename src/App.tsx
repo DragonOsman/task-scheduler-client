@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, useState, useEffect, useCallback } from "react";
+import { ChangeEvent, FormEvent, useState, useEffect } from "react";
 import TimeField from "react-simple-timefield";
 import "./App.css";
 
@@ -26,6 +26,16 @@ interface TaskListProps {
 
 interface TaskFormProps {
   addTask: Function;
+}
+
+interface CountDownTimerProps {
+  targetTime: string;
+}
+
+interface ShowCounterProps {
+  hours: number;
+  minutes: number;
+  seconds: number;
 }
 
 function TaskForm({ addTask }: TaskFormProps) {
@@ -83,6 +93,65 @@ function TaskForm({ addTask }: TaskFormProps) {
   );
 }
 
+const getReturnValues = (countDown: number) => {
+  const hours: number = Math.floor(
+    (countDown % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+  );
+  const minutes: number = Math.floor((countDown % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds: number = Math.floor((countDown % (1000 * 60)) / 1000);
+
+  return [hours, minutes, seconds];
+};
+
+const useCountdown = (targetTime: string) => {
+  const [targetHrsStr, targetMinsStr]: string[] = targetTime.split(":");
+  const targetHrs: number = Number(targetHrsStr);
+  const targetMins: number = Number(targetMinsStr);
+  const targetDate: Date = new Date();
+  const targetSecs: number = targetDate.getSeconds();
+  targetDate.setHours(targetDate.getHours() + targetHrs);
+  targetDate.setMinutes(targetDate.getMinutes() + targetMins);
+  targetDate.setSeconds(targetSecs);
+  const countDownMs: number = targetDate.getTime();
+
+  const [countDown, setCountDown] = useState(
+    countDownMs - new Date().getTime()
+  );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCountDown(countDownMs - new Date().getTime());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [countDownMs]);
+
+  return getReturnValues(countDown);
+};
+
+const ShowCounter = ({ hours, minutes, seconds }: ShowCounterProps) => {
+  const paddedHourStr = hours.toString().padStart(2, "0");
+  const paddedMinStr = minutes.toString().padStart(2, "0");
+  const paddedSecStr = seconds.toString().padStart(2, "0");
+  return <span>{`${paddedHourStr}:${paddedMinStr}:${paddedSecStr}`}</span>;
+};
+
+function CountdownTimer({ targetTime }: CountDownTimerProps) {
+  const [hours, minutes, seconds] = useCountdown(targetTime);
+
+  if (hours <= 0 && minutes <= 0 && seconds <= 0) {
+    return <span>Time for this task is up!</span>;
+  } else {
+    return (
+      <ShowCounter
+        hours={hours}
+        minutes={minutes}
+        seconds={seconds}
+      />
+    );
+  }
+}
+
 function Task({ task, roleChoice, removeTask, completeTask, index }: TaskProps) {
   return (
     <div className="task">
@@ -93,7 +162,7 @@ function Task({ task, roleChoice, removeTask, completeTask, index }: TaskProps) 
       <p style={{
         textDecoration: task.isCompleted ? "line-through" : "none"
       }}>{task.description}</p>
-      <p>{task.time}</p>
+      <p><CountdownTimer targetTime={task.time} /></p>
       {roleChoice === "parent" ?
         <button onClick={() => removeTask(index)}>Delete</button>
         :
@@ -130,81 +199,9 @@ function App() {
   });
 
   const [tasks, setTasks] = useState<TaskType[]>([]);
-
-  const calculateTimesLeft = useCallback(() => {
-    const destinationTimes: Date[] = tasks.map(task => new Date(task.time));
-    const timeDifferences: number[] = destinationTimes.map(destTime => (
-      Number(destTime) - Number(new Date())
-    ));
-
-    const timesLeft = timeDifferences.map(difference => {
-      let result;
-      if (difference > 0) {
-        result = {
-          hours: Math.floor((difference / (1000 * 60 * 60 * 24)) % 24),
-          minutes: Math.floor((difference / 1000 * 60) % 60)
-        };
-      }
-      return result;
-    });
-
-    return timesLeft;
-  }, [tasks]);
-
-  const [timesLeft, setTimesLeft] = useState(calculateTimesLeft());
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setTimesLeft(calculateTimesLeft());
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [timesLeft, calculateTimesLeft]);
-
-
-  useEffect(() => {
-    let timerStr = "00:00";
-
-    timesLeft.forEach(timeLeft => {
-      if (timeLeft !== undefined) {
-        if (timeLeft["hours"] === 0 && timeLeft["minutes"] === 0) {
-          return;
-        }
-
-        if (timeLeft.hours.toString().length === 1 &&
-        timeLeft.minutes.toString().length === 1) {
-          timerStr = `0${timeLeft.hours}:0${timeLeft.minutes}`;
-        } else if (timeLeft.hours.toString().length === 1 &&
-        timeLeft.minutes.toString().length === 2) {
-          timerStr = `0${timeLeft.hours}:${timeLeft.minutes}`;
-        } else if (timeLeft.hours.toString().length === 2 &&
-        timeLeft.minutes.toString().length === 1) {
-          timerStr = `${timeLeft.hours}:0${timeLeft.minutes}`;
-        } else if (timeLeft.hours.toString().length === 2 &&
-        timeLeft.minutes.toString().length === 2) {
-          timerStr = `${timeLeft.hours}:${timeLeft.minutes}`;
-        }
-
-        setTasks(newTasks => {
-          newTasks = tasks.map(task => ({
-            title: task.title,
-            description: task.description,
-            time: timerStr,
-            isCompleted: task.isCompleted
-          }));
-          return newTasks;
-        });
-      }
-    });
-  }, [tasks, timesLeft]);
-  tasks.map(task => console.log(task.time));
-
   const addTask = (task: TaskType) => {
     const newTasks: TaskType[] = [...tasks, {
-      title: task.title,
-      description: task.description,
-      time: task.time,
-      isCompleted: task.isCompleted
+      ...task
     }];
     setTasks(newTasks);
   };
