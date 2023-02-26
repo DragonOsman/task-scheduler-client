@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, useState, useEffect } from "react";
+import { ChangeEvent, FormEvent, useState, useEffect, useRef } from "react";
 import TimeField from "react-simple-timefield";
 import "./App.css";
 
@@ -118,12 +118,14 @@ const useCountdown = (targetTime: string) => {
     countDownMs - new Date().getTime()
   );
 
+  const intervalRef = useRef<ReturnType<typeof setInterval>>();
+
   useEffect(() => {
-    const interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       setCountDown(countDownMs - new Date().getTime());
     }, 1000);
 
-    return () => clearInterval(interval);
+    return () => clearInterval(intervalRef.current);
   }, [countDownMs]);
 
   return getReturnValues(countDown);
