@@ -39,10 +39,10 @@ interface ShowCounterProps {
 }
 
 const TaskForm = ({ addTask }: TaskFormProps) => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [time, setTime] = useState("00:00");
-  const [isCompleted, setIsCompleted] = useState(false);
+  const [title, setTitle] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+  const [time, setTime] = useState<string>("00:00");
+  const [isCompleted, setIsCompleted] = useState<boolean>(false);
 
   const handleSubmit = (e:FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -104,7 +104,7 @@ const getReturnValues = (countDown: number) => {
 };
 
 const useCountdown = (targetDate: number) => {
-  const countDownDate = new Date(targetDate).getTime();
+  const countDownDate: number = new Date(targetDate).getTime();
 
   const [countDown, setCountDown] = useState(
     countDownDate - new Date().getTime()
@@ -124,14 +124,14 @@ const useCountdown = (targetDate: number) => {
 };
 
 const ShowCounter = ({ hours, minutes, seconds }: ShowCounterProps) => {
-  const paddedHourStr = hours.toString().padStart(2, "0");
-  const paddedMinStr = minutes.toString().padStart(2, "0");
-  const paddedSecStr = seconds.toString().padStart(2, "0");
+  const paddedHourStr: string = hours.toString().padStart(2, "0");
+  const paddedMinStr: string = minutes.toString().padStart(2, "0");
+  const paddedSecStr: string = seconds.toString().padStart(2, "0");
   return <span>{`${paddedHourStr}:${paddedMinStr}:${paddedSecStr}`}</span>;
 };
 
 const CountdownTimer = ({ targetDate }: CountDownTimerProps) => {
-  const [hours, minutes, seconds] = useCountdown(targetDate);
+  const [hours, minutes, seconds]: number[] = useCountdown(targetDate);
 
   if (hours <= 0 && minutes <= 0 && seconds <= 0) {
     return <span>Time for this task is up!</span>;
@@ -147,15 +147,15 @@ const CountdownTimer = ({ targetDate }: CountDownTimerProps) => {
 };
 
 const Task = ({ task, roleChoice, removeTask, completeTask, index }: TaskProps) => {
-  const currentDate = new Date();
-  const [targetHoursStr, targetMinutesStr] = task.time.split(":");
-  const targetHours = Number(targetHoursStr);
-  const targetMinutes = Number(targetMinutesStr);
-  const targetDate = currentDate;
+  const currentDate: Date = new Date();
+  const [targetHoursStr, targetMinutesStr]: string[] = task.time.split(":");
+  const targetHours: number = Number(targetHoursStr);
+  const targetMinutes: number = Number(targetMinutesStr);
+  const targetDate: Date = currentDate;
   targetDate.setHours(currentDate.getHours() + targetHours);
   targetDate.setMinutes(currentDate.getMinutes() + targetMinutes);
   targetDate.setSeconds(currentDate.getSeconds());
-  const targetDateMs = targetDate.getTime();
+  const targetDateMs: number = targetDate.getTime();
 
   return (
     <div className="task">
