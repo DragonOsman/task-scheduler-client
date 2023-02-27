@@ -29,7 +29,7 @@ interface TaskFormProps {
 }
 
 interface CountDownTimerProps {
-  targetTime: string;
+  targetDate: number;
 }
 
 interface ShowCounterProps {
@@ -103,30 +103,22 @@ const getReturnValues = (countDown: number) => {
   return [hours, minutes, seconds];
 };
 
-const useCountdown = (targetTime: string) => {
-  const [targetHrsStr, targetMinsStr]: string[] = targetTime.split(":");
-  const targetHrs: number = Number(targetHrsStr);
-  const targetMins: number = Number(targetMinsStr);
-  const targetDate: Date = new Date();
-  const targetSecs: number = targetDate.getSeconds();
-  targetDate.setHours(targetDate.getHours() + targetHrs);
-  targetDate.setMinutes(targetDate.getMinutes() + targetMins);
-  targetDate.setSeconds(targetSecs);
-  const countDownMs: number = targetDate.getTime();
+const useCountdown = (targetDate: number) => {
+  const countDownDate = new Date(targetDate).getTime();
 
   const [countDown, setCountDown] = useState(
-    countDownMs - new Date().getTime()
+    countDownDate - new Date().getTime()
   );
 
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
 
   useEffect(() => {
     intervalRef.current = setInterval(() => {
-      setCountDown(countDownMs - new Date().getTime());
+      setCountDown(countDownDate - new Date().getTime());
     }, 1000);
 
     return () => clearInterval(intervalRef.current);
-  }, [countDownMs]);
+  }, [countDownDate]);
 
   return getReturnValues(countDown);
 };
@@ -138,8 +130,8 @@ const ShowCounter = ({ hours, minutes, seconds }: ShowCounterProps) => {
   return <span>{`${paddedHourStr}:${paddedMinStr}:${paddedSecStr}`}</span>;
 };
 
-function CountdownTimer({ targetTime }: CountDownTimerProps) {
-  const [hours, minutes, seconds] = useCountdown(targetTime);
+function CountdownTimer({ targetDate }: CountDownTimerProps) {
+  const [hours, minutes, seconds] = useCountdown(targetDate);
 
   if (hours <= 0 && minutes <= 0 && seconds <= 0) {
     return <span>Time for this task is up!</span>;
@@ -155,6 +147,16 @@ function CountdownTimer({ targetTime }: CountDownTimerProps) {
 }
 
 function Task({ task, roleChoice, removeTask, completeTask, index }: TaskProps) {
+  const currentDate = new Date();
+  const [targetHoursStr, targetMinutesStr] = task.time.split(":");
+  const targetHours = Number(targetHoursStr);
+  const targetMinutes = Number(targetMinutesStr);
+  const targetDate = currentDate;
+  targetDate.setHours(currentDate.getHours() + targetHours);
+  targetDate.setMinutes(currentDate.getMinutes() + targetMinutes);
+  targetDate.setSeconds(currentDate.getSeconds());
+  const targetDateMs = targetDate.getTime();
+
   return (
     <div className="task">
       <button onClick={() => completeTask(index)}>Complete</button>
@@ -164,7 +166,7 @@ function Task({ task, roleChoice, removeTask, completeTask, index }: TaskProps) 
       <p style={{
         textDecoration: task.isCompleted ? "line-through" : "none"
       }}>{task.description}</p>
-      <p><CountdownTimer targetTime={task.time} /></p>
+      <p><CountdownTimer targetDate={targetDateMs} /></p>
       {roleChoice === "parent" ?
         <button onClick={() => removeTask(index)}>Delete</button>
         :
