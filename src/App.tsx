@@ -38,7 +38,7 @@ interface ShowCounterProps {
   seconds: number;
 }
 
-function TaskForm({ addTask }: TaskFormProps) {
+const TaskForm = ({ addTask }: TaskFormProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [time, setTime] = useState("00:00");
@@ -91,7 +91,7 @@ function TaskForm({ addTask }: TaskFormProps) {
       <button type="submit">Add Task</button>
     </form>
   );
-}
+};
 
 const getReturnValues = (countDown: number) => {
   const hours: number = Math.floor(
@@ -130,7 +130,7 @@ const ShowCounter = ({ hours, minutes, seconds }: ShowCounterProps) => {
   return <span>{`${paddedHourStr}:${paddedMinStr}:${paddedSecStr}`}</span>;
 };
 
-function CountdownTimer({ targetDate }: CountDownTimerProps) {
+const CountdownTimer = ({ targetDate }: CountDownTimerProps) => {
   const [hours, minutes, seconds] = useCountdown(targetDate);
 
   if (hours <= 0 && minutes <= 0 && seconds <= 0) {
@@ -144,9 +144,9 @@ function CountdownTimer({ targetDate }: CountDownTimerProps) {
       />
     );
   }
-}
+};
 
-function Task({ task, roleChoice, removeTask, completeTask, index }: TaskProps) {
+const Task = ({ task, roleChoice, removeTask, completeTask, index }: TaskProps) => {
   const currentDate = new Date();
   const [targetHoursStr, targetMinutesStr] = task.time.split(":");
   const targetHours = Number(targetHoursStr);
@@ -175,7 +175,7 @@ function Task({ task, roleChoice, removeTask, completeTask, index }: TaskProps) 
   );
 }
 
-function TaskList({ tasks, roleChoice, removeTask, completeTask }: TaskListProps) {
+const TaskList = ({ tasks, roleChoice, removeTask, completeTask }: TaskListProps) => {
   return (
     <ul className="task-list" style={{
       listStyleType: "none",
@@ -197,7 +197,7 @@ function TaskList({ tasks, roleChoice, removeTask, completeTask }: TaskListProps
   );
 }
 
-function App() {
+const App = () => {
   const [selected, setSelected] = useState({
     value: "child"
   });
