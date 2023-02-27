@@ -157,15 +157,15 @@ const Task = ({ task, roleChoice, removeTask, completeTask, index }: TaskProps) 
   targetDate.setSeconds(currentDate.getSeconds());
   const targetDateMs: number = targetDate.getTime();
 
+  const taskWritingStyle: { textDecoration: string } = {
+    textDecoration: task.isCompleted ? "line-through" : "none"
+  };
+
   return (
     <div className="task">
       <button onClick={() => completeTask(index)}>Complete</button>
-      <p style={{
-        textDecoration: task.isCompleted ? "line-through" : "none"
-      }}>{task.title}</p>
-      <p style={{
-        textDecoration: task.isCompleted ? "line-through" : "none"
-      }}>{task.description}</p>
+      <p style={taskWritingStyle}>{task.title}</p>
+      <p style={taskWritingStyle}>{task.description}</p>
       <p><CountdownTimer targetDate={targetDateMs} /></p>
       {roleChoice === "parent" ?
         <button onClick={() => removeTask(index)}>Delete</button>
