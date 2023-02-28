@@ -29,8 +29,8 @@ interface TaskFormProps {
 }
 
 interface CountDownTimerProps {
-  startDate: number; // in milliseconds
-  targetDate: number; // in milliseconds
+  startDateMs: number; // in milliseconds
+  targetDateMs: number; // in milliseconds
   isTaskCompleted: boolean;
 }
 
@@ -106,21 +106,21 @@ const getReturnValues = (countDown: number) => {
 };
 
 const useCountdown = (targetDate: number) => {
-  const countDownDate: number = new Date(targetDate).getTime();
+  const countDownDateMs: number = new Date(targetDate).getTime();
 
   const [countDown, setCountDown] = useState<number>(
-    countDownDate - new Date().getTime()
+    countDownDateMs - new Date().getTime()
   );
 
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
 
   useEffect(() => {
     intervalRef.current = setInterval(() => {
-      setCountDown(countDownDate - new Date().getTime());
+      setCountDown(countDownDateMs - new Date().getTime());
     }, 1000);
 
     return () => clearInterval(intervalRef.current);
-  }, [countDownDate]);
+  }, [countDownDateMs]);
 
   return getReturnValues(countDown);
 };
@@ -133,13 +133,13 @@ const ShowCounter = ({ hours, minutes, seconds }: ShowCounterProps) => {
 };
 
 // startDate and targetDate are in milliseconds, and are not Date objects
-const CountdownTimer = ({ startDate, targetDate, isTaskCompleted }: CountDownTimerProps) => {
-  const [hours, minutes, seconds]: number[] = useCountdown(targetDate);
+const CountdownTimer = ({ startDateMs, targetDateMs, isTaskCompleted }: CountDownTimerProps) => {
+  const [hours, minutes, seconds]: number[] = useCountdown(targetDateMs);
 
   const leastPercent: number = 10;
-  const totalTime: number = targetDate - startDate;
+  const totalTime: number = targetDateMs - startDateMs;
   const currentTime: number = new Date().getTime();
-  const progress: number = currentTime - startDate;
+  const progress: number = currentTime - startDateMs;
   const currentPercentage: number = (progress / totalTime) * 100;
 
   if (hours <= 0 && minutes <= 0 && seconds <= 0) {
@@ -186,8 +186,8 @@ const Task = ({ task, roleChoice, removeTask, completeTask, index }: TaskProps) 
       <p style={taskWritingStyle}>{task.description}</p>
       <p>
         <CountdownTimer
-          startDate={currentDate.getTime()}
-          targetDate={targetDateMs}
+          startDateMs={currentDate.getTime()}
+          targetDateMs={targetDateMs}
           isTaskCompleted={task.isCompleted}
         />
       </p>
