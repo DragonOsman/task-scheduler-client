@@ -29,8 +29,8 @@ interface TaskFormProps {
 }
 
 interface CountDownTimerProps {
-  startDateMs: number; // in milliseconds
-  targetDateMs: number; // in milliseconds
+  startDateMs: number;
+  targetDateMs: number;
   isTaskCompleted: boolean;
 }
 
