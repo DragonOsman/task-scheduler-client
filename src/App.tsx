@@ -105,8 +105,8 @@ const getReturnValues = (countDown: number) => {
   return [hours, minutes, seconds];
 };
 
-const useCountdown = (targetDate: number) => {
-  const countDownDateMs: number = new Date(targetDate).getTime();
+const useCountdown = (targetDateMs: number): number[] => {
+  const countDownDateMs: number = new Date(targetDateMs).getTime();
 
   const [countDown, setCountDown] = useState<number>(
     countDownDateMs - new Date().getTime()
