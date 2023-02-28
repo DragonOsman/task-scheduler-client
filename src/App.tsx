@@ -132,7 +132,6 @@ const ShowCounter = ({ hours, minutes, seconds }: ShowCounterProps) => {
   return <span>{`${paddedHourStr}:${paddedMinStr}:${paddedSecStr}`}</span>;
 };
 
-// startDate and targetDate are in milliseconds, and are not Date objects
 const CountdownTimer = ({ startDateMs, targetDateMs, isTaskCompleted }: CountDownTimerProps) => {
   const [hours, minutes, seconds]: number[] = useCountdown(targetDateMs);
 
