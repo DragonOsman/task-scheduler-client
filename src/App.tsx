@@ -227,6 +227,7 @@ const App = () => {
   });
 
   const [tasks, setTasks] = useState<TaskType[]>([]);
+
   const addTask = (task: TaskType) => {
     const newTasks: TaskType[] = [...tasks, {
       ...task
