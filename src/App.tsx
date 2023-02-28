@@ -29,7 +29,9 @@ interface TaskFormProps {
 }
 
 interface CountDownTimerProps {
-  targetDate: number;
+  startDate: number; // in milliseconds
+  targetDate: number; // in milliseconds
+  isTaskCompleted: boolean;
 }
 
 interface ShowCounterProps {
@@ -130,11 +132,27 @@ const ShowCounter = ({ hours, minutes, seconds }: ShowCounterProps) => {
   return <span>{`${paddedHourStr}:${paddedMinStr}:${paddedSecStr}`}</span>;
 };
 
-const CountdownTimer = ({ targetDate }: CountDownTimerProps) => {
+// startDate and targetDate are in milliseconds, and are not Date objects
+const CountdownTimer = ({ startDate, targetDate, isTaskCompleted }: CountDownTimerProps) => {
   const [hours, minutes, seconds]: number[] = useCountdown(targetDate);
+
+  const leastPercent: number = 10;
+  const totalTime: number = targetDate - startDate;
+  const currentTime: number = new Date().getTime();
+  const progress: number = currentTime - startDate;
+  const currentPercentage: number = (progress / totalTime) * 100;
 
   if (hours <= 0 && minutes <= 0 && seconds <= 0) {
     return <span>Time for this task is up!</span>;
+  } else if (currentPercentage <= leastPercent && !isTaskCompleted) {
+    return (
+      <span style={{
+        backgroundColor: "red"
+      }}>
+        You have very little time left! Complete this task quickly, as you
+        are taking time away from the next task (if any)!
+      </span>
+    );
   } else {
     return (
       <ShowCounter
@@ -166,7 +184,13 @@ const Task = ({ task, roleChoice, removeTask, completeTask, index }: TaskProps) 
       <button onClick={() => completeTask(index)}>Complete</button>
       <p style={taskWritingStyle}>{task.title}</p>
       <p style={taskWritingStyle}>{task.description}</p>
-      <p><CountdownTimer targetDate={targetDateMs} /></p>
+      <p>
+        <CountdownTimer
+          startDate={currentDate.getTime()}
+          targetDate={targetDateMs}
+          isTaskCompleted={task.isCompleted}
+        />
+      </p>
       {roleChoice === "parent" ?
         <button onClick={() => removeTask(index)}>Delete</button>
         :
