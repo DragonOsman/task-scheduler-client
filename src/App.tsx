@@ -5,8 +5,9 @@ import "./App.css";
 interface TaskType {
   title: string;
   description: string;
-  time: string,
-  isCompleted: boolean
+  timeRemaining: string;
+  startTime: number;
+  isCompleted: boolean;
 }
 
 interface TaskProps {
@@ -43,27 +44,29 @@ interface ShowCounterProps {
 const TaskForm = ({ addTask }: TaskFormProps) => {
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
-  const [time, setTime] = useState<string>("00:00");
+  const [timeRemaining, setTimeRemaining] = useState<string>("00:00");
   const [isCompleted, setIsCompleted] = useState<boolean>(false);
 
   const handleSubmit = (e:FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!title || !description || !time) {
+    if (!title || !description || !timeRemaining) {
       return;
     }
 
     const task: TaskType = {
       title: title,
       description: description,
-      time: time,
+      timeRemaining: timeRemaining,
+      startTime: new Date().getTime(),
       isCompleted: isCompleted
     };
+    console.log(`task.startTime in TaskForm: ${task.startTime}`);
 
     addTask(task);
     setTitle("");
     setDescription("");
     setIsCompleted(false);
-    setTime("00:00");
+    setTimeRemaining("00:00");
   };
 
   return (
@@ -87,8 +90,8 @@ const TaskForm = ({ addTask }: TaskFormProps) => {
 
       <label htmlFor="time">Task Completion Time:</label>
       <TimeField
-        value={time}
-        onChange={e => setTime(e.target.value)}
+        value={timeRemaining}
+        onChange={e => setTimeRemaining(e.target.value)}
       />
       <button type="submit">Add Task</button>
     </form>
@@ -105,7 +108,7 @@ const getReturnValues = (countDown: number) => {
   return [hours, minutes, seconds];
 };
 
-const useCountdown = (targetDateMs: number): number[] => {
+const useCountdown = (targetDateMs: number, isTaskCompleted: boolean): number[] => {
   const countDownDateMs: number = new Date(targetDateMs).getTime();
 
   const [countDown, setCountDown] = useState<number>(
@@ -115,12 +118,16 @@ const useCountdown = (targetDateMs: number): number[] => {
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
 
   useEffect(() => {
-    intervalRef.current = setInterval(() => {
-      setCountDown(countDownDateMs - new Date().getTime());
-    }, 1000);
+    if (!isTaskCompleted) {
+      if (countDown > 0) {
+        intervalRef.current = setInterval(() => {
+          setCountDown(countDownDateMs - new Date().getTime());
+        }, 1000);
+      }
+    }
 
     return () => clearInterval(intervalRef.current);
-  }, [countDownDateMs]);
+  }, [countDown, isTaskCompleted, countDownDateMs]);
 
   return getReturnValues(countDown);
 };
@@ -133,24 +140,40 @@ const ShowCounter = ({ hours, minutes, seconds }: ShowCounterProps) => {
 };
 
 const CountdownTimer = ({ startDateMs, targetDateMs, isTaskCompleted }: CountDownTimerProps) => {
-  const [hours, minutes, seconds]: number[] = useCountdown(targetDateMs);
+  const [hours, minutes, seconds]: number[] = useCountdown(targetDateMs, isTaskCompleted);
 
   const leastPercent: number = 10;
   const totalTime: number = targetDateMs - startDateMs;
   const currentTime: number = new Date().getTime();
   const progress: number = currentTime - startDateMs;
-  const currentPercentage: number = (progress / totalTime) * 100;
+  const currentPercentage: number = 100 - ((progress / totalTime) * 100);
 
   if (hours <= 0 && minutes <= 0 && seconds <= 0) {
     return <span>Time for this task is up!</span>;
   } else if (currentPercentage <= leastPercent && !isTaskCompleted) {
     return (
+      <>
+        <span style={{
+          backgroundColor: "red",
+          padding: "4px 10px 5px 10px"
+        }}>
+          You have very little time left! Complete this task quickly, as you
+          will then start taking time away from the next task (if any)!
+        </span>
+        <br />
+        <ShowCounter
+          hours={hours}
+          minutes={minutes}
+          seconds={seconds}
+        />
+      </>
+    );
+  } else if (isTaskCompleted) {
+    return (
       <span style={{
-        backgroundColor: "red"
-      }}>
-        You have very little time left! Complete this task quickly, as you
-        are taking time away from the next task (if any)!
-      </span>
+        backgroundColor: "green",
+        padding: "4px 10px 5px 10px"
+      }}>Good job!  You completed the task!</span>
     );
   } else {
     return (
@@ -165,7 +188,7 @@ const CountdownTimer = ({ startDateMs, targetDateMs, isTaskCompleted }: CountDow
 
 const Task = ({ task, roleChoice, removeTask, completeTask, index }: TaskProps) => {
   const currentDate: Date = new Date();
-  const [targetHoursStr, targetMinutesStr]: string[] = task.time.split(":");
+  const [targetHoursStr, targetMinutesStr]: string[] = task.timeRemaining.split(":");
   const targetHours: number = Number(targetHoursStr);
   const targetMinutes: number = Number(targetMinutesStr);
   const targetDate: Date = currentDate;
@@ -185,7 +208,7 @@ const Task = ({ task, roleChoice, removeTask, completeTask, index }: TaskProps) 
       <p style={taskWritingStyle}>{task.description}</p>
       <p>
         <CountdownTimer
-          startDateMs={currentDate.getTime()}
+          startDateMs={task.startTime}
           targetDateMs={targetDateMs}
           isTaskCompleted={task.isCompleted}
         />
